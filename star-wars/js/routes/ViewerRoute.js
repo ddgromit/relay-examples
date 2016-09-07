@@ -10,17 +10,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom';
 import Relay from 'react-relay';
-import StarWarsApp from './components/StarWarsApp';
-import StarWarsAppHomeRoute from './routes/StarWarsAppHomeRoute';
-import ViewerRoute from './routes/ViewerRoute';
 
-ReactDOM.render(
-  <Relay.RootContainer
-    Component={StarWarsApp}
-    route={new ViewerRoute()}
-  />,
-  document.getElementById('root')
-);
+export default class extends Relay.Route {
+  static queries = {
+    viewer: () => Relay.QL`query { viewer }`,
+  };
+  static routeName = 'ViewerRoute';
+}

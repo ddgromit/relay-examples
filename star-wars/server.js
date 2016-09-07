@@ -46,6 +46,7 @@ const app = new WebpackDevServer(compiler, {
   proxy: {'/graphql': `http://localhost:${GRAPHQL_PORT}`},
   publicPath: '/js/',
   stats: {colors: true},
+  noInfo: true,
 });
 // Serve static resources
 app.use('/', express.static(path.resolve(__dirname, 'public')));

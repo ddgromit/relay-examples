@@ -14,6 +14,7 @@ import React from 'react';
 import Relay from 'react-relay';
 import StarWarsShip from './StarWarsShip';
 import AddShipMutation from '../mutation/AddShipMutation';
+import ChangeAllShipsMutation from '../mutation/ChangeAllShipsMutation';
 
 class StarWarsApp extends React.Component {
   constructor() {
@@ -29,7 +30,7 @@ class StarWarsApp extends React.Component {
     this.props.relay.commitUpdate(
       new AddShipMutation({
         name,
-        faction: this.props.factions[this.state.factionId],
+        faction: this.props.viewer.factions[this.state.factionId],
       })
     );
     this.setState({shipName: ''});
@@ -47,10 +48,21 @@ class StarWarsApp extends React.Component {
     });
   }
 
+  handleChangeAllShips() {
+    this.props.relay.commitUpdate(
+      new ChangeAllShipsMutation({
+        factionIds: this.props.viewer.factions.map((f) => f.id),
+        viewerId: this.props.viewer.id,
+      })
+    );
+  }
+
   render() {
-    const {factions} = this.props;
+    const {factions} = this.props.viewer;
     return (
       <div>
+        User: { this.props.viewer.name } ({ this.props.viewer.id })
+        <br />
         <ol>
           {factions.map(faction => (
             <li key={faction.id}>
@@ -81,6 +93,11 @@ class StarWarsApp extends React.Component {
                 </li>
               </ol>
             </li>
+            <li>
+              <button onClick={this.handleChangeAllShips.bind(this)}>
+                Change All Ships
+              </button>
+            </li>
         </ol>
       </div>
     );
@@ -89,20 +106,24 @@ class StarWarsApp extends React.Component {
 
 export default Relay.createContainer(StarWarsApp, {
   fragments: {
-    factions: () => Relay.QL`
-      fragment on Faction @relay(plural: true) {
-        id,
-        factionId,
-        name,
-        ships(first: 10) {
-          edges {
-            node {
-              id
-              ${StarWarsShip.getFragment('ship')}
+    viewer: () => Relay.QL`
+      fragment on Viewer {
+        name
+        id
+        factions(names: ["empire", "rebels"]) {
+          id,
+          factionId,
+          name,
+          ships(first: 10) {
+            edges {
+              node {
+                id
+                ${StarWarsShip.getFragment('ship')}
+              }
             }
           }
+          ${AddShipMutation.getFragment('faction')},
         }
-        ${AddShipMutation.getFragment('faction')},
       }
     `,
   },

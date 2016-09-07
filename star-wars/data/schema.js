@@ -38,6 +38,8 @@ import {
   getFactions,
   getShip,
   getShips,
+  getUser,
+  changeAllNames,
 } from './database';
 
 /**
@@ -128,12 +130,20 @@ const {nodeInterface, nodeField} = nodeDefinitions(
       return getFaction(id);
     } else if (type === 'Ship') {
       return getShip(id);
+    } else if (type === 'Viewer') {
+      return getUser(id);
     } else {
       return null;
     }
   },
   (obj) => {
-    return obj.ships ? factionType : shipType;
+    if (obj.ships) {
+      return factionType;
+    } else if (obj.type === 'user') {
+      return viewerType;
+    } else {
+      return shipType;
+    }
   }
 );
 
@@ -217,6 +227,28 @@ const factionType = new GraphQLObjectType({
   interfaces: [nodeInterface],
 });
 
+const viewerType = new GraphQLObjectType({
+  name: 'Viewer',
+  fields: () => ({
+    id: globalIdField('Viewer'),
+    name: {
+      type: GraphQLString,
+      resolve: (viewer) => viewer.name,
+    },
+    factions: {
+      type: new GraphQLList(factionType),
+      args: {
+        names: {
+          type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
+        },
+      },
+      resolve: (root, {names}) => getFactions(names),
+    },
+  }),
+  interfaces: [nodeInterface],
+});
+
+
 /**
  * This is the type that will be the root of our query,
  * and the entry point into our schema.
@@ -234,12 +266,16 @@ const queryType = new GraphQLObjectType({
       type: new GraphQLList(factionType),
       args: {
         names: {
-          type: new GraphQLList(GraphQLString),
+          type: new GraphQLNonNull(new GraphQLList(GraphQLString)),
         },
       },
       resolve: (root, {names}) => getFactions(names),
     },
     node: nodeField,
+    viewer: {
+      type: viewerType,
+      resolve: () => getUser(1),
+    },
   }),
 });
 
@@ -297,6 +333,40 @@ const shipMutation = mutationWithClientMutationId({
   },
 });
 
+
+
+const changeAllShipsMutation = mutationWithClientMutationId({
+  name: 'ChangeAllShips',
+  inputFields: {
+    factionIds: {
+      type: new GraphQLList(GraphQLString),
+    },
+    viewerId: {
+      type: GraphQLString,
+    },
+  },
+  outputFields: {
+    viewer: {
+      type: viewerType,
+      resolve: (payload) => getUser(1),
+    },
+    changedFactions: {
+      type: new GraphQLList(factionType),
+      resolve: (payload) => (
+        [
+          getFaction("0"),
+          getFaction("1"),
+        ]
+      ),
+    },
+  },
+  mutateAndGetPayload: () => {
+    const newShip = changeAllNames();
+    return {
+    };
+  },
+});
+
 /**
  * This is the type that will be the root of our mutations,
  * and the entry point into performing writes in our schema.
@@ -310,6 +380,7 @@ const mutationType = new GraphQLObjectType({
   name: 'Mutation',
   fields: () => ({
     introduceShip: shipMutation,
+    changeAllShips: changeAllShipsMutation,
   }),
 });
 

@@ -74,6 +74,12 @@ const empire = {
   ships: ['6', '7', '8'],
 };
 
+const derek = {
+  id: '1',
+  type: 'user',
+  name: 'Derek',
+};
+
 const data = {
   Faction: {
     1: rebels,
@@ -89,6 +95,9 @@ const data = {
     7: tieInterceptor,
     8: executor,
   },
+  User: {
+    1: derek,
+  }
 };
 
 let nextShip = 9;
@@ -114,6 +123,10 @@ export function getFaction(id) {
   return data.Faction[id];
 }
 
+export function getUser(id) {
+  return data.User[id];
+}
+
 export function getFactions(names) {
   return names.map(name => {
     if (name === 'empire') {
@@ -123,5 +136,14 @@ export function getFactions(names) {
       return rebels;
     }
     return null;
+  });
+}
+
+export function changeAllNames() {
+  Object.keys(data.Ship).forEach((key) => {
+    data.Ship[key].name += "*";
+  });
+  Object.keys(data.User).forEach((key) => {
+    data.User[key].name += "*";
   });
 }
